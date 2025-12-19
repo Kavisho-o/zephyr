@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env
+
+# OS
+.DS_Store
+
+# ML artifacts
+# hazard_model.pkl
+
+# Logs
+*.log
+
+# Frontend build (if applicable)
+dist/
+node_modules/
