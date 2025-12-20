@@ -32,10 +32,9 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
 
     payload = {
         "coordinates": [
-            [start_lon, start_lat],  # ORS expects [lon, lat]
+            [start_lon, start_lat],
             [end_lon, end_lat]
-        ],
-        "geometry_format": "geojson"
+        ]
     }
 
     headers = {
@@ -50,7 +49,6 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
         timeout=10
     )
 
-    # ---- explicit error visibility (important for debugging) ----
     if response.status_code != 200:
         raise ValueError(
             f"ORS routing failed ({response.status_code}): {response.text}"
@@ -58,14 +56,10 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
 
     data = response.json()
 
-    if "routes" not in data or not data["routes"]:
-        raise ValueError(f"Invalid ORS route response: {data}")
-
     route = data["routes"][0]
 
-    geometry = route["geometry"]["coordinates"]  # [lon, lat]
+    geometry = route["geometry"]["coordinates"]  # already GeoJSON [lon, lat]
 
-    # convert to (lat, lon) for internal app consistency
     polyline = [(lat, lon) for lon, lat in geometry]
 
     summary = route["summary"]
@@ -75,3 +69,4 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
         "distance_km": summary["distance"] / 1000,
         "duration_sec": summary["duration"]
     }
+
