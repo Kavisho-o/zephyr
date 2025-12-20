@@ -11,7 +11,13 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app)
+    CORS(
+        app,
+        resources={r"/*": {"origins": "*"}},
+        allow_headers="*",
+        methods=["GET", "POST", "OPTIONS"]
+    )
+
 
     # registering blueprints
     from app.routes.health import health_bp
