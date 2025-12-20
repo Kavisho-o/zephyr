@@ -49,7 +49,6 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
     )
 
     response.raise_for_status()
-
     data = response.json()
 
     if "routes" not in data or not data["routes"]:
@@ -57,13 +56,16 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
 
     route = data["routes"][0]
 
+    geometry = route["geometry"]["coordinates"]
+
+    # ORS returns [lon, lat] → convert to (lat, lon)
+    polyline = [(lat, lon) for lon, lat in geometry]
+
     summary = route["summary"]
 
+
     return {
-    "coordinates": [
-        (start_lat, start_lon),
-        (end_lat, end_lon)
-    ],
-    "distance_km": summary["distance"] / 1000,
-    "duration_sec": summary["duration"]
-}
+        "coordinates": polyline,        
+        "distance_km": summary["distance"] / 1000,
+        "duration_sec": summary["duration"]
+    }
