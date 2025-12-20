@@ -32,35 +32,40 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
 
     payload = {
         "coordinates": [
-            [start_lon, start_lat],
+            [start_lon, start_lat],  # ORS expects [lon, lat]
             [end_lon, end_lat]
         ],
-        "geometry_format": "geojson"  # ✅ ONLY new addition
+        "geometry_format": "geojson"
     }
 
-    params = {
-        "api_key": Config.OPENROUTESERVICE_API_KEY
+    headers = {
+        "Authorization": Config.OPENROUTESERVICE_API_KEY,
+        "Content-Type": "application/json"
     }
 
     response = requests.post(
         url,
-        params=params,
+        headers=headers,
         json=payload,
         timeout=10
     )
 
-    response.raise_for_status()
+    # ---- explicit error visibility (important for debugging) ----
+    if response.status_code != 200:
+        raise ValueError(
+            f"ORS routing failed ({response.status_code}): {response.text}"
+        )
+
     data = response.json()
 
     if "routes" not in data or not data["routes"]:
-        raise ValueError(f"Invalid route response: {data}")
+        raise ValueError(f"Invalid ORS route response: {data}")
 
     route = data["routes"][0]
 
-    # ✅ Now geometry is GeoJSON, not encoded string
-    geometry = route["geometry"]["coordinates"]
+    geometry = route["geometry"]["coordinates"]  # [lon, lat]
 
-    # ORS gives [lon, lat]
+    # convert to (lat, lon) for internal app consistency
     polyline = [(lat, lon) for lon, lat in geometry]
 
     summary = route["summary"]
