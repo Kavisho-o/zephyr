@@ -68,14 +68,16 @@ def predict_trip():
             raise ValueError("Route distance or duration is invalid")
 
         # --------------------------------------------------
-        # Sampling
+        # Sampling (anchors)
         # --------------------------------------------------
         anchor_points = sample_route_every_n_km(
             coordinates,
             n_km=5
         )
 
-        # 2) Dense virtual points (cheap, visual continuity)
+        # --------------------------------------------------
+        # Dense virtual points (visual continuity)
+        # --------------------------------------------------
         sampled_points = densify_route(
             anchor_points,
             meters_between_points=500
@@ -83,6 +85,19 @@ def predict_trip():
 
         if not sampled_points or len(sampled_points) < 1:
             raise ValueError("No sampled points generated from route")
+
+        # --------------------------------------------------
+        # 🔑 CRITICAL FIX:
+        # Cap sampled points BEFORE weather + ML work
+        # --------------------------------------------------
+        MAX_SEGMENTS = 20
+
+        if len(sampled_points) > MAX_SEGMENTS:
+            step = len(sampled_points) / MAX_SEGMENTS
+            sampled_points = [
+                sampled_points[int(i * step)]
+                for i in range(MAX_SEGMENTS)
+            ]
 
         # --------------------------------------------------
         # Time interpolation
@@ -142,18 +157,9 @@ def predict_trip():
             raise ValueError("Timeline generation failed")
 
         # --------------------------------------------------
-        # Trip summary
+        # Trip summary (NO downstream capping)
         # --------------------------------------------------
         trip_summary = summarize_trip(timeline)
-
-        MAX_SEGMENTS = 50
-
-        if len(timeline) > MAX_SEGMENTS:
-            step = len(timeline) / MAX_SEGMENTS
-            timeline = [
-                timeline[int(i * step)]
-                for i in range(MAX_SEGMENTS)
-            ]
 
         return jsonify({
             "start": start,
