@@ -1,11 +1,10 @@
 # geocoding + routing
 
 import requests
+import polyline
 from app.config import Config
 
 def geocode_location(place_name):
-
-    print("ORS KEY INSIDE APP:", Config.OPENROUTESERVICE_API_KEY)
 
     url = "https://api.openrouteservice.org/geocode/search"
 
@@ -15,7 +14,7 @@ def geocode_location(place_name):
         "size": 1
     }
 
-    response = requests.get(url, params=params, timeout=10)
+    response = requests.get(url, params=params, timeout=30)
     response.raise_for_status()
 
     data = response.json()
@@ -25,7 +24,6 @@ def geocode_location(place_name):
 
     lon, lat = data["features"][0]["geometry"]["coordinates"]
     return lat, lon
-
 
 def fetch_route(start_lat, start_lon, end_lat, end_lon):
     url = "https://api.openrouteservice.org/v2/directions/driving-car"
@@ -45,7 +43,7 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
         url,
         params=params,
         json=payload,
-        timeout=10
+        timeout=30
     )
 
     response.raise_for_status()
@@ -54,13 +52,13 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
     route = data["routes"][0]
     summary = route["summary"]
 
-    # Stable fallback geometry
+    encoded_geometry = route["geometry"]
+    decoded = polyline.decode(encoded_geometry)
+
     return {
-        "coordinates": [
-            (start_lat, start_lon),
-            (end_lat, end_lon)
-        ],
+        "coordinates": decoded, 
         "distance_km": summary["distance"] / 1000,
         "duration_sec": summary["duration"]
     }
+
 
