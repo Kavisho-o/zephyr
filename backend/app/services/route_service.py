@@ -34,17 +34,20 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
         "coordinates": [
             [start_lon, start_lat],
             [end_lon, end_lat]
-        ]
+        ],
+        "options": {
+            "geometry_format": "geojson"  # ✅ REQUIRED FOR POST
+        }
     }
 
-    params = {
-        "api_key": Config.OPENROUTESERVICE_API_KEY,
-        "geometry_format": "geojson"  # ✅ CRITICAL FIX
+    headers = {
+        "Authorization": Config.OPENROUTESERVICE_API_KEY,
+        "Content-Type": "application/json"
     }
 
     response = requests.post(
         url,
-        params=params,
+        headers=headers,
         json=payload,
         timeout=10
     )
@@ -57,7 +60,7 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
 
     route = data["routes"][0]
 
-    # ✅ Now geometry is a GeoJSON object
+    # ✅ geometry is NOW a dict (GeoJSON)
     geometry = route["geometry"]["coordinates"]
 
     # ORS returns [lon, lat] → convert to (lat, lon)
