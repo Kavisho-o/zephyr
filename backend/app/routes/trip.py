@@ -146,6 +146,15 @@ def predict_trip():
         # --------------------------------------------------
         trip_summary = summarize_trip(timeline)
 
+        MAX_SEGMENTS = 50
+
+        if len(timeline) > MAX_SEGMENTS:
+            step = len(timeline) / MAX_SEGMENTS
+            timeline = [
+                timeline[int(i * step)]
+                for i in range(MAX_SEGMENTS)
+            ]
+
         return jsonify({
             "start": start,
             "end": end,
