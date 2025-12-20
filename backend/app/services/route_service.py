@@ -30,22 +30,21 @@ def geocode_location(place_name):
 def fetch_route(start_lat, start_lon, end_lat, end_lon):
     url = "https://api.openrouteservice.org/v2/directions/driving-car"
 
-    headers = {
-        "Authorization": Config.OPENROUTESERVICE_API_KEY,
-        "Content-Type": "application/json"
-    }
-
     payload = {
         "coordinates": [
             [start_lon, start_lat],
             [end_lon, end_lat]
         ],
-        "geometry_format": "geojson"
+        "geometry_format": "geojson"  # ✅ ONLY new addition
+    }
+
+    params = {
+        "api_key": Config.OPENROUTESERVICE_API_KEY
     }
 
     response = requests.post(
         url,
-        headers=headers,
+        params=params,
         json=payload,
         timeout=10
     )
@@ -58,6 +57,7 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
 
     route = data["routes"][0]
 
+    # ✅ Now geometry is GeoJSON, not encoded string
     geometry = route["geometry"]["coordinates"]
 
     # ORS gives [lon, lat]
