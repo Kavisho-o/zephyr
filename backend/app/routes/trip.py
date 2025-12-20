@@ -4,7 +4,7 @@ import traceback
 from flask import Blueprint, request, jsonify
 
 from app.services.route_service import geocode_location, fetch_route
-from app.services.sampling_service import sample_route_every_n_km
+from app.services.sampling_service import sample_route_every_n_km, densify_route
 from app.services.time_service import build_departure_datetime, interpolate_timestamps_by_distance
 from app.services.weather_service import fetch_weather, round_location, round_time_to_hour
 
@@ -70,9 +70,15 @@ def predict_trip():
         # --------------------------------------------------
         # Sampling
         # --------------------------------------------------
-        sampled_points = sample_route_every_n_km(
+        anchor_points = sample_route_every_n_km(
             coordinates,
-            distance_km
+            n_km=5
+        )
+
+        # 2) Dense virtual points (cheap, visual continuity)
+        sampled_points = densify_route(
+            anchor_points,
+            meters_between_points=500
         )
 
         if not sampled_points or len(sampled_points) < 1:

@@ -23,3 +23,37 @@ def sample_route_every_n_km(route_coords, n_km=10):
         sampled.append(route_coords[-1])
 
     return sampled
+
+
+def densify_route(anchor_points, meters_between_points=800):
+    """
+    Adds virtual points between anchor points.
+    These points DO NOT cause extra weather calls.
+    
+    """
+
+    dense_points = [anchor_points[0]]
+
+    for i in range(1, len(anchor_points)):
+        start = anchor_points[i - 1]
+        end = anchor_points[i]
+
+        segment_distance_km = haversine_distance(
+            start[0], start[1],
+            end[0], end[1]
+        )
+
+        if segment_distance_km <= 0:
+            continue
+
+        steps = max(1, int((segment_distance_km * 1000) / meters_between_points))
+
+        for step in range(1, steps + 1):
+            ratio = step / steps
+
+            lat = start[0] + ratio * (end[0] - start[0])
+            lon = start[1] + ratio * (end[1] - start[1])
+
+            dense_points.append((lat, lon))
+
+    return dense_points
