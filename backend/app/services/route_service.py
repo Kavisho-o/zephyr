@@ -30,22 +30,20 @@ def geocode_location(place_name):
 def fetch_route(start_lat, start_lon, end_lat, end_lon):
     url = "https://api.openrouteservice.org/v2/directions/driving-car"
 
-    headers = {
-        "Authorization": Config.OPENROUTESERVICE_API_KEY,
-        "Content-Type": "application/json"
-    }
-
     payload = {
         "coordinates": [
             [start_lon, start_lat],
             [end_lon, end_lat]
-        ],
-        "geometry_format": "geojson"
+        ]
+    }
+
+    params = {
+        "api_key": Config.OPENROUTESERVICE_API_KEY
     }
 
     response = requests.post(
         url,
-        headers=headers,
+        params=params,
         json=payload,
         timeout=10
     )
@@ -54,16 +52,14 @@ def fetch_route(start_lat, start_lon, end_lat, end_lon):
     data = response.json()
 
     route = data["routes"][0]
-
-    geometry = route["geometry"]["coordinates"]
-
-    # ORS returns [lon, lat]
-    polyline = [(lat, lon) for lon, lat in geometry]
-
     summary = route["summary"]
 
+    # Stable fallback geometry
     return {
-        "coordinates": polyline,
+        "coordinates": [
+            (start_lat, start_lon),
+            (end_lat, end_lon)
+        ],
         "distance_km": summary["distance"] / 1000,
         "duration_sec": summary["duration"]
     }
