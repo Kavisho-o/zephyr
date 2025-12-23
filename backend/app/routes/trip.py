@@ -16,9 +16,6 @@ from app.ml.inference import (
     summarize_trip
 )
 
-# --------------------------------------------------
-# Setup
-# --------------------------------------------------
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +26,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, "hazard_model.pkl")
 HAZARD_MODEL = load_model(MODEL_PATH)
 
-
-# --------------------------------------------------
-# Route
-# --------------------------------------------------
 
 @trip_bp.route("/predict-trip", methods=["POST"])
 def predict_trip():
@@ -67,17 +60,11 @@ def predict_trip():
         if distance_km <= 0 or duration_sec <= 0:
             raise ValueError("Route distance or duration is invalid")
 
-        # --------------------------------------------------
-        # Sampling (anchors)
-        # --------------------------------------------------
         anchor_points = sample_route_every_n_km(
             coordinates,
             n_km=5
         )
 
-        # --------------------------------------------------
-        # Dense virtual points (visual continuity)
-        # --------------------------------------------------
         sampled_points = densify_route(
             anchor_points,
             meters_between_points=500
@@ -86,10 +73,6 @@ def predict_trip():
         if not sampled_points or len(sampled_points) < 1:
             raise ValueError("No sampled points generated from route")
 
-        # --------------------------------------------------
-        # 🔑 CRITICAL FIX:
-        # Cap sampled points BEFORE weather + ML work
-        # --------------------------------------------------
         MAX_SEGMENTS = 20
 
         if len(sampled_points) > MAX_SEGMENTS:
@@ -99,9 +82,6 @@ def predict_trip():
                 for i in range(MAX_SEGMENTS)
             ]
 
-        # --------------------------------------------------
-        # Time interpolation
-        # --------------------------------------------------
         time_offsets = interpolate_timestamps_by_distance(
             sampled_points,
             duration_sec
@@ -110,9 +90,6 @@ def predict_trip():
         if len(time_offsets) != len(sampled_points):
             raise ValueError("Time interpolation mismatch with sampled points")
 
-        # --------------------------------------------------
-        # Weather + Risk Timeline
-        # --------------------------------------------------
         timeline = []
         weather_cache = {}
 
@@ -156,9 +133,6 @@ def predict_trip():
         if not timeline:
             raise ValueError("Timeline generation failed")
 
-        # --------------------------------------------------
-        # Trip summary (NO downstream capping)
-        # --------------------------------------------------
         trip_summary = summarize_trip(timeline)
 
         return jsonify({
